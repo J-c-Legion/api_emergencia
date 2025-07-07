@@ -5,17 +5,25 @@ const db = require('./db');
 
 app.use(express.json());
 
+// Importar rutas
 const registerRouter = require('./routes/register');
+const perfilRoutes = require('./routes/perfil');
+const usuariosRoutes = require('./routes/usuarios');
+const loginRoutes = require('./routes/login');
+const comunidadesRoutes = require('./routes/comunidades');
+const alertasRoutes = require('./routes/alertas');
+const mensajesRoutes = require('./routes/mensajes');
 
-// RUTAS
-app.use('/login', require('./routes/login'));
-app.use('/usuarios', require('./routes/usuarios'));
-app.use('/comunidades', require('./routes/comunidades'));
-app.use('/alertas', require('./routes/alertas'));
-app.use('/mensajes', require('./routes/mensajes'));
+// Montar rutas
 app.use('/register', registerRouter);
+app.use('/perfil', perfilRoutes);
+app.use('/usuarios', usuariosRoutes);
+app.use('/login', loginRoutes);
+app.use('/comunidades', comunidadesRoutes);
+app.use('/alertas', alertasRoutes);
+app.use('/mensajes', mensajesRoutes);
 
-// Ruta base
+// Ruta raíz de prueba
 app.get('/', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT NOW() as hora_actual');
@@ -25,7 +33,8 @@ app.get('/', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 4000; // <<--- AQUÍ FIJAS EL PUERTO A 4000
+// Arrancar servidor
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });

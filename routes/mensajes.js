@@ -1,39 +1,40 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const pool = require('../db');
 
-// msn
-router.post('/enviar', async (req, res) => {
-  const { id_usuario, id_comunidad, mensaje } = req.body;
-
+// Obtener mensajes de una comunidad
+router.get('/:id_comunidad', async (req, res) => {
+  const id_comunidad = req.params.id_comunidad;
   try {
-    const [result] = await db.query(
-      `INSERT INTO mensajes (id_usuario, id_comunidad, contenido)
-       VALUES (?, ?, ?)`,
-      [id_usuario, id_comunidad, mensaje]
-    );
-    res.status(201).json({ mensaje: 'Mensaje enviado', id_mensaje: result.insertId });
+    const [mensajes] = await pool.query(`
+      SELECT m.id_mensaje, m.id_usuario, u.nombre, m.contenido, m.fecha_envio
+      FROM mensajes m
+      JOIN usuarios u ON m.id_usuario = u.id_usuario
+      WHERE m.id_comunidad = ?
+      ORDER BY m.fecha_envio ASC
+    `, [id_comunidad]);
+
+    res.json(mensajes);
   } catch (error) {
-    res.status(500).json({ error: 'Error al enviar mensaje', detalles: error.message });
+    console.error('❌ Error al obtener mensajes:', error);
+    res.status(500).json({ mensaje: 'Error interno' });
   }
 });
 
-// ver msn
-router.get('/comunidad/:id_comunidad', async (req, res) => {
-  const { id_comunidad } = req.params;
+// Enviar nuevo mensaje
+router.post('/', async (req, res) => {
+  const { id_usuario, id_comunidad, contenido } = req.body;
 
   try {
-    const [rows] = await db.query(
-      `SELECT m.id_mensaje, m.contenido AS mensaje, m.fecha_envio, u.nombre 
-       FROM mensajes m
-       JOIN usuarios u ON m.id_usuario = u.id_usuario
-       WHERE m.id_comunidad = ?
-       ORDER BY m.fecha_envio ASC`,
-      [id_comunidad]
-    );
-    res.json(rows);
+    await pool.query(`
+      INSERT INTO mensajes (id_usuario, id_comunidad, contenido, fecha_envio)
+      VALUES (?, ?, ?, NOW())
+    `, [id_usuario, id_comunidad, contenido]);
+
+    res.json({ mensaje: 'Mensaje enviado correctamente' });
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener mensajes', detalles: error.message });
+    console.error('❌ Error al enviar mensaje:', error);
+    res.status(500).json({ mensaje: 'Error interno al enviar mensaje' });
   }
 });
 
